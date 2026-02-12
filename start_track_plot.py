@@ -369,35 +369,42 @@ def plot_course_and_tracks(
                     showlegend=False,
                 ))
 
-    # axes / layout
+    # axes / layout — optimised for interactive use in Streamlit
     fig.update_layout(
-        title=f"Course {course_id} — rotated by avg TWD = {avg_twd:.1f}° (wind/upwind ↑)",
+        title=dict(
+            text=f"Start — rotated by avg TWD = {avg_twd:.1f}° (wind ↑)",
+            font=dict(size=14, color="#004D40", family="Inter, sans-serif"),
+        ),
         template="plotly_white",
-        xaxis_title="X (m, rotated)",
-        yaxis_title="Y (m, rotated — wind/upwind ↑)",
+        xaxis_title="Cross-wind (m)",
+        yaxis_title="Upwind (m)",
         yaxis=dict(scaleanchor="x", scaleratio=1),
-        margin=dict(l=40, r=20, t=60, b=40),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
-        
+        margin=dict(l=40, r=20, t=50, b=40),
+        legend=dict(
+            orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0,
+            font=dict(size=10),
+            bgcolor="rgba(255,255,255,0.8)",
+        ),
+        dragmode="pan",       # default to pan (easier than zoom box)
+        height=550,
     )
 
-    # zoom: centered on avg(SL1, SL2) => that is (0,0) by construction
-    # keep tight view around start area (and boundary if near)
+    # Auto-fit to the data extent instead of hardcoded center
     xlim, ylim = compute_xy_extent(
-    x_arrays=(np.array([sl1x, sl2x]), bx, dfw["x"].values),
-    y_arrays=(np.array([sl1y, sl2y]), by, dfw["y"].values),
-    pad=1.10,
-    min_span=600
+        x_arrays=(np.array([sl1x, sl2x]), bx, dfw["x"].values),
+        y_arrays=(np.array([sl1y, sl2y]), by, dfw["y"].values),
+        pad=1.10,
+        min_span=600
     )
-    mid_x = +200.0
-    mid_y = -250.0
-    half = 300  # meters
+    fig.update_xaxes(range=list(xlim))
+    fig.update_yaxes(range=list(ylim))
 
-    fig.update_xaxes(range=[mid_x - half, mid_x + half])
-    fig.update_yaxes(range=[mid_y - half, mid_y + half])
-
-    #ig.update_xaxes(range=list(xlim))
-    #fig.update_yaxes(range=list(ylim))
+    # Interactive config hint (double-click to reset zoom)
+    fig.update_layout(
+        modebar=dict(orientation="v"),
+        xaxis=dict(fixedrange=False),
+        yaxis=dict(fixedrange=False),
+    )
 
 
     return fig, {"avg_twd": avg_twd, "center_lat": clat, "center_lon": clon}

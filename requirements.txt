@@ -9,4 +9,5 @@ plotly>=5.18
 pandas>=2.1
 numpy>=1.26
 matplotlib>=3.8
-kaleido
+kaleido==0.2.1
+pyarrow>=14.0

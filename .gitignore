@@ -1,0 +1,7 @@
+# Data — only push parquet, ignore raw CSVs
+logs/*.csv
+
+# Python
+__pycache__/
+*.pyc
+.venv/
