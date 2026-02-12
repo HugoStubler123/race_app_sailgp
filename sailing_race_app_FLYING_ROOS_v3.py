@@ -865,7 +865,7 @@ def main():
     with st.sidebar:
         st.markdown("## 📊 Data Selection")
         race_date = st.text_input("Race Date (YYYYMMDD)", value="20260118", key="race_date_input")
-        csv_path = f"/Users/hugostubler/Documents/SailGP /Report_Pipeline/data/logs/log_{race_date}.csv"
+        csv_path = f"logs/log_{race_date}.csv"
         
         if Path(csv_path).exists():
             df = load_race_data(csv_path)
