@@ -1191,7 +1191,7 @@ def render_header():
     st.markdown("""
         <div class="flying-roos-header">
             <div>
-                <h1>Race Analysis Dashboard</h1>
+                <h1>Race Analyser</h1>
                 <div class="subtitle">BONDS Flying Roos | SailGP Performance Analytics</div>
                 <a href="https://drive.google.com/drive/folders/11SslMi7EELFd-DkpFutCXrKCGpfi9Q_3" target="_blank">
                     Team Drive &rarr;
