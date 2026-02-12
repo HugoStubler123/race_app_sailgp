@@ -389,15 +389,16 @@ def plot_course_and_tracks(
         height=550,
     )
 
-    # Auto-fit to the data extent instead of hardcoded center
-    xlim, ylim = compute_xy_extent(
-        x_arrays=(np.array([sl1x, sl2x]), bx, dfw["x"].values),
-        y_arrays=(np.array([sl1y, sl2y]), by, dfw["y"].values),
-        pad=1.10,
-        min_span=600
-    )
-    fig.update_xaxes(range=list(xlim))
-    fig.update_yaxes(range=list(ylim))
+    # Center zoom on average position of selected boat tracks
+    track_cx = float(dfw["x"].mean())
+    track_cy = float(dfw["y"].mean())
+    # Compute span from track data only (plus SL marks for context)
+    all_x = np.concatenate([dfw["x"].values, [sl1x, sl2x]])
+    all_y = np.concatenate([dfw["y"].values, [sl1y, sl2y]])
+    x_span = max(600, float(np.nanmax(all_x) - np.nanmin(all_x)) * 1.15)
+    y_span = max(600, float(np.nanmax(all_y) - np.nanmin(all_y)) * 1.15)
+    fig.update_xaxes(range=[track_cx - x_span / 2, track_cx + x_span / 2])
+    fig.update_yaxes(range=[track_cy - y_span / 2, track_cy + y_span / 2])
 
     # Interactive config hint (double-click to reset zoom)
     fig.update_layout(

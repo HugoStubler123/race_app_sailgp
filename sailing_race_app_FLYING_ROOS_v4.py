@@ -1224,7 +1224,7 @@ def render_start_tab(race_data, selected_boats, selected_race_id):
 
     st.markdown("### Start Metrics")
     try:
-        df_start = race_data[(race_data['TTS_s'] < 90) & (race_data['TTS_s'] > -10)].copy()
+        df_start = race_data[(race_data['TTS_s'] < 120) & (race_data['TTS_s'] > -10)].copy()
         pc_metrics = {}
         for boat in selected_boats:
             df_subset = df_start[df_start['BOAT'] == boat]
@@ -1251,7 +1251,7 @@ def render_start_tab(race_data, selected_boats, selected_race_id):
             styled_df = df_combined.T.style
             styled_df = styled_df.format("{:.1f}")
             st.markdown("**Pre-Commit Metrics (PC)**")
-            st.dataframe(styled_df.apply(apply_subtle_gradient_func, axis=0).format("{:.1f}"), use_container_width=True)
+            st.dataframe(styled_df.apply(apply_subtle_gradient_func, axis=1).format("{:.1f}"), use_container_width=True)
 
             st.markdown("### Start Track Plot")
             try:
@@ -1363,11 +1363,11 @@ def render_wind_tab(race_data, race_data_full, selected_boats):
 
 
 @st.fragment
-def render_tactical_tab(race_data_full, selected_race_id):
+def render_tactical_tab(race_data_full, selected_race_id, race_date):
     """Tactical tab — runs independently as a fragment."""
     st.markdown("## Tactical Analysis - ALL BOATS")
     try:
-        marks_path = "wind_data.csv"
+        marks_path = f"marks/wind_data_{race_date}.csv"
         if Path(marks_path).exists():
             marks_df = pd.read_csv(marks_path)
             boat_data = race_data_full[['BOAT', 'DATETIME', 'LATITUDE_GPS_unk', 'LONGITUDE_GPS_unk',
@@ -1376,45 +1376,75 @@ def render_tactical_tab(race_data_full, selected_race_id):
             legs_df, leg_summary_df = analyze_gate_crossings(boat_data, marks_df)
 
             if not legs_df.empty:
+                # --- Filter controls ---
+                fc1, fc2, fc3 = st.columns([1, 1, 2])
+                total_legs = len(leg_summary_df)
+                with fc1:
+                    show_top_n = st.slider("Top N legs", min_value=1, max_value=max(total_legs, 1),
+                                           value=total_legs, step=1, key="tact_top_n",
+                                           help="Show only the N fastest legs (by time)")
+                with fc2:
+                    filter_mode = st.radio("Filter mode", ["Overall", "Per turn"],
+                                           horizontal=True, key="tact_filter_mode",
+                                           help="Overall = top N across all turns; Per turn = top N per Left/Right turn")
+
+                def _filter_legs(summary_df, legs_data, leg_type):
+                    """Filter leg_summary and legs_df to keep only top N fastest."""
+                    s = summary_df[summary_df["leg_type"] == leg_type].copy()
+                    if show_top_n >= len(s):
+                        return s, legs_data[legs_data["leg_id"].isin(s["leg_id"])]
+                    if filter_mode == "Per turn":
+                        kept = s.groupby("gate", group_keys=False).apply(
+                            lambda g: g.nsmallest(show_top_n, "time_seconds")
+                        )
+                    else:
+                        kept = s.nsmallest(show_top_n, "time_seconds")
+                    kept_ids = kept["leg_id"].unique()
+                    return kept, legs_data[legs_data["leg_id"].isin(kept_ids)]
+
                 uw_tab, dw_tab = st.tabs(["Upwind (ALL BOATS)", "Downwind (ALL BOATS)"])
 
                 with uw_tab:
                     st.markdown("### All Boats - Upwind Legs")
-                    uw_summary = leg_summary_df[leg_summary_df["leg_type"] == "uw"]
+                    uw_summary_full = leg_summary_df[leg_summary_df["leg_type"] == "uw"]
+                    uw_summary, uw_legs = _filter_legs(leg_summary_df, legs_df, "uw")
                     if len(uw_summary) > 0:
                         col1, col2 = st.columns([2, 1])
                         with col1:
-                            st.caption("Line width = speed | Color = BSP | Shows ALL boats")
-                            plot = create_multi_boat_tactical_plot(legs_df, leg_summary_df, 'uw')
+                            label = f"Showing {len(uw_summary)}/{len(uw_summary_full)} legs"
+                            st.caption(f"Line width = speed | Color = BSP | {label}")
+                            plot = create_multi_boat_tactical_plot(uw_legs, uw_summary, 'uw')
                             if plot:
                                 st.image(plot, use_container_width=True)
                         with col2:
                             st.markdown("**Gate Performance**")
                             st.write("Median time (s) for each gate based on top-5 fastest legs.")
-                            gate_summary = create_gate_summary_table(leg_summary_df, 'uw')
+                            gate_summary = create_gate_summary_table(uw_summary, 'uw')
                             if gate_summary is not None:
                                 st.dataframe(gate_summary, use_container_width=True)
-                            st.metric("Total UW Legs", len(uw_summary))
+                            st.metric("Displayed UW Legs", f"{len(uw_summary)} / {len(uw_summary_full)}")
                             st.metric("Avg Time", f"{uw_summary['time_seconds'].mean():.1f}s")
                     else:
                         st.warning("No upwind legs detected")
 
                 with dw_tab:
                     st.markdown("### All Boats - Downwind Legs")
-                    dw_summary = leg_summary_df[leg_summary_df["leg_type"] == "dw"]
+                    dw_summary_full = leg_summary_df[leg_summary_df["leg_type"] == "dw"]
+                    dw_summary, dw_legs = _filter_legs(leg_summary_df, legs_df, "dw")
                     if len(dw_summary) > 0:
                         col1, col2 = st.columns([2, 1])
                         with col1:
-                            st.caption("Line width = speed | Color = BSP | Shows ALL boats")
-                            plot = create_multi_boat_tactical_plot(legs_df, leg_summary_df, 'dw')
+                            label = f"Showing {len(dw_summary)}/{len(dw_summary_full)} legs"
+                            st.caption(f"Line width = speed | Color = BSP | {label}")
+                            plot = create_multi_boat_tactical_plot(dw_legs, dw_summary, 'dw')
                             if plot:
                                 st.image(plot, use_container_width=True)
                         with col2:
                             st.markdown("**Gate Performance**")
-                            gate_summary = create_gate_summary_table(leg_summary_df, 'dw')
+                            gate_summary = create_gate_summary_table(dw_summary, 'dw')
                             if gate_summary is not None:
                                 st.dataframe(gate_summary, use_container_width=True)
-                            st.metric("Total DW Legs", len(dw_summary))
+                            st.metric("Displayed DW Legs", f"{len(dw_summary)} / {len(dw_summary_full)}")
                             st.metric("Avg Time", f"{dw_summary['time_seconds'].mean():.1f}s")
                     else:
                         st.warning("No downwind legs detected")
@@ -1588,7 +1618,7 @@ def main():
         df_full = st.session_state.df_full
 
         tab1, tab2, tab3, tab4, tab5 = st.tabs([
-            "Start", "Legs", "Wind", "Tactical (ALL BOATS)", "PDF Export"
+            "Start", "Legs", "Wind", "Tactical", "PDF Export"
         ])
 
         with tab1:
@@ -1601,7 +1631,7 @@ def main():
             render_wind_tab(race_data, race_data_full, selected_boats)
 
         with tab4:
-            render_tactical_tab(race_data_full, selected_race_id)
+            render_tactical_tab(race_data_full, selected_race_id, race_date)
 
         with tab5:
             render_pdf_tab(df_full, selected_race_id, selected_boats, selected_legs)
