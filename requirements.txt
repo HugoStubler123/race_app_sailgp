@@ -3,7 +3,7 @@ geopy
 arrow
 typing
 scipy
-streamlit==1.29.0
+streamlit>=1.32.0
 altair==4.2.2
 plotly>=5.18
 pandas>=2.1
