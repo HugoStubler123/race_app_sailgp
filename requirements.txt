@@ -1,11 +1,11 @@
-pandas 
-numpy
 reportlab
-plotly
 geopy
-streamlit
-matplotlib
 arrow
 typing
-altair
 scipy
+streamlit==1.29.0
+altair==4.2.2
+plotly>=5.18
+pandas>=2.1
+numpy>=1.26
+matplotlib>=3.8
