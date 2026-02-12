@@ -8,3 +8,4 @@ matplotlib
 arrow
 typing
 altair
+scipy
