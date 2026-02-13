@@ -1380,9 +1380,18 @@ def render_tactical_tab(race_data_full, selected_race_id, race_date):
                 fc1, fc2, fc3 = st.columns([1, 1, 2])
                 total_legs = len(leg_summary_df)
                 with fc1:
-                    show_top_n = st.slider("Top N legs", min_value=1, max_value=max(total_legs, 1),
-                                           value=total_legs, step=1, key="tact_top_n",
-                                           help="Show only the N fastest legs (by time)")
+                    options = sorted(
+                        set([max(total_legs, 1), 15, 10, 5, 3, 2, 1]),
+                        reverse=True
+                    )
+
+                    show_top_n = st.select_slider(
+                        "Top N legs",
+                        options=options,
+                        value=options[0],
+                        key="tact_top_n",
+                        help="Show only the N fastest legs (by time)"
+)
                 with fc2:
                     filter_mode = st.radio("Filter mode", ["Overall", "Per turn"],
                                            horizontal=True, key="tact_filter_mode",
