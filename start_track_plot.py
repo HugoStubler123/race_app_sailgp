@@ -358,7 +358,7 @@ def plot_course_and_tracks(
     dfw = boats.copy()
     if tts_col not in dfw.columns:
         raise ValueError(f"Tracks DF missing '{tts_col}'")
-    dfw = dfw[(dfw[tts_col] < 60) & (dfw[tts_col] > -10)].copy()
+    dfw = dfw[(dfw[tts_col] < 80) & (dfw[tts_col] > -10)].copy()
 
     for c in [lat_col, lon_col]:
         if c not in dfw.columns:
@@ -442,11 +442,11 @@ def plot_course_and_tracks(
 
         #g = break_on_jumps(g, t_col=tts_col, max_step_m=40, max_speed_mps=25, max_dt_s=2)
         if "DATETIME" in g.columns:
-            g = keep_second_start_by_time(g, time_col="DATETIME", min_gap_s=30)
+            g = keep_second_start_by_time(g, time_col="DATETIME", min_gap_s=20)
         else:
             g = keep_second_start_by_tts(g, tts_col=tts_col, reset_jump_s=40)
         g = keep_second_start_by_tts(g, tts_col=tts_col, reset_jump_s=20)
-        g = g[(g[tts_col] > -10) & (g[tts_col] < 100)]
+        g = g[(g[tts_col] > -10) & (g[tts_col] < 80)]
         col = color_mapping.get(str(boat), None)
 
         fig.add_trace(go.Scatter(
