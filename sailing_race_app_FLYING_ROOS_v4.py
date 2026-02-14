@@ -1372,6 +1372,7 @@ def render_tactical_tab(race_data_full, selected_race_id, race_date):
             marks_df = pd.read_csv(marks_path)
             boat_data = race_data_full[['BOAT', 'DATETIME', 'LATITUDE_GPS_unk', 'LONGITUDE_GPS_unk',
                                         'TWD_MHU_SGP_deg', 'BOAT_SPEED_km_h_1', 'TWA_BOW_SGP_deg']].copy()
+            
             boat_data = boat_data.rename(columns={'BOAT': 'boat', 'DATETIME': '_time'})
             legs_df, leg_summary_df = analyze_gate_crossings(boat_data, marks_df)
 

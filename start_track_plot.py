@@ -164,6 +164,102 @@ def get_mark_latlon(marks_df: pd.DataFrame, name: str):
     return float(r["Lat"]), float(r["Lon"])
 
 
+
+
+def break_on_jumps(g: pd.DataFrame,
+                   t_col: str,
+                   x_col: str = "x",
+                   y_col: str = "y",
+                   max_step_m: float = 40.0,     # jump threshold between consecutive samples
+                   max_speed_mps: float = 25.0,  # ~50 kt; tune
+                   max_dt_s: float = 2.0         # if dt is huge, likely a gap/reset
+                  ) -> pd.DataFrame:
+    g = g.copy()
+    g[t_col] = pd.to_numeric(g[t_col], errors="coerce")
+    g = g.dropna(subset=[t_col, x_col, y_col]).sort_values(t_col)
+
+    dx = g[x_col].diff()
+    dy = g[y_col].diff()
+    ds = np.hypot(dx, dy)
+
+    dt = g[t_col].diff().abs()
+    # avoid division by 0
+    speed = ds / dt.replace(0, np.nan)
+
+    # Conditions that indicate we should NOT connect point i-1 -> i
+    cut = (
+        (ds > max_step_m) |
+        (speed > max_speed_mps) |
+        (dt > max_dt_s) |
+        (dt.isna())
+    )
+
+    # Insert gaps: Plotly breaks lines at NaN
+    g.loc[cut, x_col] = np.nan
+    g.loc[cut, y_col] = np.nan
+    return g
+
+def keep_best_tts_segment(g, tts_col="TTS_s", max_gap_s=1.5):
+    g = g.copy()
+    g[tts_col] = pd.to_numeric(g[tts_col], errors="coerce")
+    g = g.dropna(subset=[tts_col]).sort_values(tts_col)
+
+    # "break" whenever TTS jumps too much (gap) or goes backwards (reset)
+    dt = g[tts_col].diff()
+    new_seg = (dt.isna()) | (dt < 0) | (dt > max_gap_s)
+
+    seg_id = new_seg.cumsum()
+    # keep the segment with the most points (most reliable)
+    best = seg_id.value_counts().idxmax()
+    return g[seg_id == best]
+
+
+def keep_second_start_by_tts(g: pd.DataFrame,
+                             tts_col: str = "TTS_s",
+                             reset_jump_s: float = 40.0) -> pd.DataFrame:
+    """
+    Split when TTS resets backwards or jumps forward a lot, then keep the 2nd segment.
+    """
+    gg = g.copy()
+    gg[tts_col] = pd.to_numeric(gg[tts_col], errors="coerce")
+    gg = gg.dropna(subset=[tts_col]).sort_values(tts_col)
+
+    d = gg[tts_col].diff()
+
+    # reset backwards OR huge forward jump (often happens between runs)
+    split_mask = (d < 0) | (d > reset_jump_s)
+    split_points = gg.index[split_mask]
+
+    if len(split_points) == 0:
+        return gg
+
+    # keep everything after the last split point => "2nd start"
+    return gg.loc[split_points[-1]:]
+
+import pandas as pd
+import numpy as np
+
+def keep_second_start_by_time(g: pd.DataFrame,
+                              time_col: str,
+                              min_gap_s: float = 30.0) -> pd.DataFrame:
+    """
+    If there are 2 start sequences, split on a big time gap and keep the 2nd.
+    """
+    gg = g.copy()
+    gg[time_col] = pd.to_datetime(gg[time_col], errors="coerce", utc=True)
+    gg = gg.dropna(subset=[time_col]).sort_values(time_col)
+
+    dt = gg[time_col].diff().dt.total_seconds()
+    # candidate split points where gap is big
+    candidates = dt[dt > min_gap_s]
+
+    if candidates.empty:
+        return gg  # nothing to split
+
+    split_idx = candidates.index[-1]  # last big gap -> start of last sequence
+    return gg.loc[split_idx:]
+
+
 DEFAULT_COLOR_MAPPING = {
     "AUS": "#009A00",
     "CAN": "#F86767",
@@ -338,9 +434,19 @@ def plot_course_and_tracks(
             showlegend=False,
         ))
 
-    # tracks
+
+
     for boat, g in dfw.groupby(boat_col):
         g = g.sort_values(tts_col)
+        #g = keep_best_tts_segment(g, tts_col=tts_col, max_gap_s=1)
+
+        #g = break_on_jumps(g, t_col=tts_col, max_step_m=40, max_speed_mps=25, max_dt_s=2)
+        if "DATETIME" in g.columns:
+            g = keep_second_start_by_time(g, time_col="DATETIME", min_gap_s=30)
+        else:
+            g = keep_second_start_by_tts(g, tts_col=tts_col, reset_jump_s=40)
+        g = keep_second_start_by_tts(g, tts_col=tts_col, reset_jump_s=20)
+        g = g[(g[tts_col] > -10) & (g[tts_col] < 100)]
         col = color_mapping.get(str(boat), None)
 
         fig.add_trace(go.Scatter(
