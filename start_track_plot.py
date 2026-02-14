@@ -443,9 +443,9 @@ def plot_course_and_tracks(
         #g = break_on_jumps(g, t_col=tts_col, max_step_m=40, max_speed_mps=25, max_dt_s=2)
         if "DATETIME" in g.columns:
             g = keep_second_start_by_time(g, time_col="DATETIME", min_gap_s=20)
-        else:
-            g = keep_second_start_by_tts(g, tts_col=tts_col, reset_jump_s=40)
-        g = keep_second_start_by_tts(g, tts_col=tts_col, reset_jump_s=20)
+        #else:
+        #   g = keep_second_start_by_tts(g, tts_col=tts_col, reset_jump_s=40)
+        #g = keep_second_start_by_tts(g, tts_col=tts_col, reset_jump_s=20)
         g = g[(g[tts_col] > -10) & (g[tts_col] < 90)]
         col = color_mapping.get(str(boat), None)
 
