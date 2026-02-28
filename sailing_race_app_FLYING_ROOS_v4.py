@@ -3,6 +3,7 @@ BONDS FLYING ROOS - SailGP Race Analysis Dashboard v4
 Performance-optimized with fragment-based rendering, improved branding, and robust PDF export.
 """
 
+import gc
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -116,10 +117,19 @@ def get_subtle_gradient(value, min_val, max_val):
 
 @st.cache_data
 def load_race_data(file_path):
-    """Load race data from Parquet (preferred) or CSV."""
+    """Load race data from Parquet (preferred) or CSV.
+
+    Adds derived columns here so the cached copy already has them,
+    avoiding mutation of the shared object on every rerun.
+    """
     if file_path.endswith('.parquet'):
-        return pd.read_parquet(file_path)
-    return pd.read_csv(file_path)
+        df = pd.read_parquet(file_path)
+    else:
+        df = pd.read_csv(file_path)
+    # Pre-compute derived columns inside cache so they're only computed once
+    if 'TWA_MHU_SGP_deg' in df.columns and 'LENGTH_RH_P_mm' in df.columns and 'LENGTH_RH_S_mm' in df.columns:
+        df['RH_LEE'] = np.where(df['TWA_MHU_SGP_deg'] > 0, df['LENGTH_RH_P_mm'], df['LENGTH_RH_S_mm'])
+    return df
 
 
 def discover_race_dates():
@@ -1291,22 +1301,25 @@ def render_legs_tab(race_data, selected_boats, selected_legs, show_stability):
     st.markdown("## Leg-by-Leg Analysis")
     for leg_num in selected_legs:
         st.markdown(f"### Leg {int(leg_num)}")
-        leg_data = race_data[race_data['TRK_LEG_NUM_unk'] == leg_num]
-        col1, col2 = st.columns([2, 1])
-        with col1:
-            fig = plot_leg_tracks(leg_data, selected_boats, int(leg_num))
-            if fig:
-                st.plotly_chart(fig, use_container_width=True, key=f"leg_track_{leg_num}")
-        with col2:
-            summary_styled = create_summary_table_styled(leg_data, selected_boats, int(leg_num))
-            if summary_styled is not None:
-                st.markdown(f"**Leg {int(leg_num)} Summary**")
-                st.dataframe(summary_styled, use_container_width=True)
-                if show_stability:
-                    st.markdown("**Stability Metrics**")
-                    stability_styled = create_stability_table_styled(leg_data, selected_boats)
-                    if stability_styled is not None:
-                        st.dataframe(stability_styled, use_container_width=True)
+        try:
+            leg_data = race_data[race_data['TRK_LEG_NUM_unk'] == leg_num]
+            col1, col2 = st.columns([2, 1])
+            with col1:
+                fig = plot_leg_tracks(leg_data, selected_boats, int(leg_num))
+                if fig:
+                    st.plotly_chart(fig, use_container_width=True, key=f"leg_track_{leg_num}")
+            with col2:
+                summary_styled = create_summary_table_styled(leg_data, selected_boats, int(leg_num))
+                if summary_styled is not None:
+                    st.markdown(f"**Leg {int(leg_num)} Summary**")
+                    st.dataframe(summary_styled, use_container_width=True)
+                    if show_stability:
+                        st.markdown("**Stability Metrics**")
+                        stability_styled = create_stability_table_styled(leg_data, selected_boats)
+                        if stability_styled is not None:
+                            st.dataframe(stability_styled, use_container_width=True)
+        except Exception as e:
+            st.error(f"Error rendering leg {int(leg_num)}: {str(e)}")
         st.markdown("---")
 
 
@@ -1314,53 +1327,58 @@ def render_legs_tab(race_data, selected_boats, selected_legs, show_stability):
 def render_wind_tab(race_data, race_data_full, selected_boats):
     """Wind tab — runs independently as a fragment."""
     st.markdown("## Wind Tactical Analysis")
+    try:
+        wind_boat = st.selectbox(
+            "Select boat for wind analysis",
+            options=selected_boats, index=0,
+            key="wind_boat_select_v4"
+        )
 
-    wind_boat = st.selectbox(
-        "Select boat for wind analysis",
-        options=selected_boats, index=0,
-        key="wind_boat_select_v4"
-    )
+        fig = plot_wind_analysis(race_data, wind_boat)
+        if fig:
+            st.plotly_chart(fig, use_container_width=True, key="wind_analysis_chart")
+        else:
+            st.warning("No wind data available for selected boat")
 
-    fig = plot_wind_analysis(race_data, wind_boat)
-    if fig:
-        st.plotly_chart(fig, use_container_width=True, key="wind_analysis_chart")
-    else:
-        st.warning("No wind data available for selected boat")
+        st.markdown("### Wind Statistics")
+        wind_stats_data = {}
+        for boat in selected_boats:
+            boat_data = race_data[race_data['BOAT'] == boat]
+            if len(boat_data) == 0:
+                continue
+            twd_rolling = boat_data['TWD_MHU_SGP_deg'].rolling(min(60, len(boat_data)))
+            wind_stats_data[boat] = {
+                'TWD Avg': boat_data['TWD_MHU_SGP_deg'].mean(),
+                'TWD Min (60s)': twd_rolling.min().min(),
+                'TWD Max (60s)': twd_rolling.max().max(),
+                'TWS Avg': boat_data['TWS_MHU_SGP_km_h_1'].mean()
+            }
+        if wind_stats_data:
+            wind_stats_df = pd.DataFrame(wind_stats_data).T.round(0)
+            styled_df = wind_stats_df.style.apply(
+                lambda row: [get_gradient_color(val, row.min(), row.max(), reverse=True) for val in row],
+                axis=0
+            ).format("{:.0f}")
+            st.dataframe(styled_df, use_container_width=True)
 
-    st.markdown("### Wind Statistics")
-    wind_stats_data = {}
-    for boat in selected_boats:
-        boat_data = race_data[race_data['BOAT'] == boat]
-        twd_rolling = boat_data['TWD_MHU_SGP_deg'].rolling(60)
-        wind_stats_data[boat] = {
-            'TWD Avg': boat_data['TWD_MHU_SGP_deg'].mean(),
-            'TWD Min (60s)': twd_rolling.min().min(),
-            'TWD Max (60s)': twd_rolling.max().max(),
-            'TWS Avg': boat_data['TWS_MHU_SGP_km_h_1'].mean()
-        }
-    wind_stats_df = pd.DataFrame(wind_stats_data).T.round(0)
-    styled_df = wind_stats_df.style.apply(
-        lambda row: [get_gradient_color(val, row.min(), row.max(), reverse=True) for val in row],
-        axis=0
-    ).format("{:.0f}")
-    st.dataframe(styled_df, use_container_width=True)
-
-    st.markdown("### Wind Maps (IDW Interpolation)")
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown("**True Wind Speed (TWS)**")
-        try:
-            tws_fig = create_wind_map(race_data_full, 'TWS_MHU_SGP_km_h_1', 'TWS Distribution', colorscale='Viridis')
-            st.plotly_chart(tws_fig, use_container_width=True, key="tws_map")
-        except Exception as e:
-            st.error(f"Error creating TWS map: {str(e)}")
-    with col2:
-        st.markdown("**True Wind Direction (TWD)**")
-        try:
-            twd_fig = create_wind_map(race_data_full, 'TWD_MHU_SGP_deg', 'TWD Distribution', colorscale='RdYlGn')
-            st.plotly_chart(twd_fig, use_container_width=True, key="twd_map")
-        except Exception as e:
-            st.error(f"Error creating TWD map: {str(e)}")
+        st.markdown("### Wind Maps (IDW Interpolation)")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown("**True Wind Speed (TWS)**")
+            try:
+                tws_fig = create_wind_map(race_data_full, 'TWS_MHU_SGP_km_h_1', 'TWS Distribution', colorscale='Viridis')
+                st.plotly_chart(tws_fig, use_container_width=True, key="tws_map")
+            except Exception as e:
+                st.error(f"Error creating TWS map: {str(e)}")
+        with col2:
+            st.markdown("**True Wind Direction (TWD)**")
+            try:
+                twd_fig = create_wind_map(race_data_full, 'TWD_MHU_SGP_deg', 'TWD Distribution', colorscale='RdYlGn')
+                st.plotly_chart(twd_fig, use_container_width=True, key="twd_map")
+            except Exception as e:
+                st.error(f"Error creating TWD map: {str(e)}")
+    except Exception as e:
+        st.error(f"Error in wind analysis: {str(e)}")
 
 
 @st.fragment
@@ -1491,6 +1509,9 @@ def render_pdf_tab(df_full, selected_race_id, selected_boats, selected_legs):
                     )
                 except Exception as e:
                     st.error(f"Error generating PDF: {str(e)}")
+                finally:
+                    plt.close('all')
+                    gc.collect()
 
 
 # ============================================================================
@@ -1547,7 +1568,6 @@ def main():
             file_type = "parquet" if data_path.endswith('.parquet') else "CSV"
             df = load_race_data(data_path)
             st.success(f"{len(df):,} rows loaded ({file_type})")
-            df['RH_LEE'] = np.where(df['TWA_MHU_SGP_deg'] > 0, df.LENGTH_RH_P_mm, df.LENGTH_RH_S_mm)
 
             race_ids = get_unique_race_ids(df)
             if race_ids:
