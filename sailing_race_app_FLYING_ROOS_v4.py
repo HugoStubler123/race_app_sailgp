@@ -1193,14 +1193,266 @@ def apply_flying_roos_css():
         .stSelectbox > div > div {{
             border-radius: 8px;
         }}
+
+        /* ---- Global touch optimization ---- */
+        * {{
+            -webkit-tap-highlight-color: transparent;
+        }}
+        html {{
+            touch-action: manipulation;
+        }}
+
+        /* ============================================================
+           TABLET BREAKPOINT (max-width: 768px)
+           ============================================================ */
+        @media (max-width: 768px) {{
+            /* -- Reduce page padding -- */
+            .block-container {{
+                padding-left: 1rem !important;
+                padding-right: 1rem !important;
+                padding-top: 0.5rem !important;
+            }}
+
+            /* -- Compact header -- */
+            .flying-roos-header {{
+                padding: 12px 16px;
+                border-radius: 10px;
+                margin-bottom: 12px;
+                gap: 12px;
+            }}
+            .flying-roos-header img {{
+                height: 40px;
+            }}
+            .flying-roos-header h1 {{
+                font-size: 1.2rem !important;
+            }}
+            .flying-roos-header .subtitle {{
+                font-size: 0.75rem;
+            }}
+            .flying-roos-header a {{
+                font-size: 0.7rem;
+            }}
+
+            /* -- Tabs: horizontal scroll, compact padding -- */
+            .stTabs [data-baseweb="tab-list"] {{
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                flex-wrap: nowrap !important;
+                padding: 4px;
+                gap: 2px;
+                scrollbar-width: none;
+            }}
+            .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar {{
+                display: none;
+            }}
+            .stTabs [data-baseweb="tab"] {{
+                padding: 8px 14px;
+                font-size: 0.75rem;
+                white-space: nowrap;
+                flex-shrink: 0;
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+            }}
+
+            /* -- Buttons: bigger touch targets -- */
+            .stButton button,
+            .stDownloadButton button {{
+                min-height: 44px;
+                padding: 10px 20px;
+                font-size: 0.8rem;
+            }}
+
+            /* -- Metrics: readable on tablet -- */
+            [data-testid="stMetricValue"] {{
+                font-size: 1.1rem !important;
+            }}
+            [data-testid="stMetricLabel"] {{
+                font-size: 0.65rem !important;
+            }}
+
+            /* -- DataFrames: horizontal scroll -- */
+            [data-testid="stDataFrame"],
+            .dataframe {{
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch;
+            }}
+            [data-testid="stDataFrame"] > div {{
+                min-width: 100% !important;
+            }}
+
+            /* -- Sidebar: full width overlay -- */
+            [data-testid="stSidebar"] {{
+                min-width: 85vw !important;
+                max-width: 85vw !important;
+            }}
+            [data-testid="stSidebar"] .stSelectbox label,
+            [data-testid="stSidebar"] .stMultiSelect label {{
+                font-size: 0.8rem !important;
+            }}
+
+            /* -- Selectbox / multiselect: bigger touch targets -- */
+            .stSelectbox [data-baseweb="select"],
+            .stMultiSelect [data-baseweb="select"] {{
+                min-height: 44px;
+            }}
+
+            /* -- Section headers compact -- */
+            .section-header h2 {{
+                font-size: 1rem !important;
+            }}
+
+            /* -- Headings tighter -- */
+            h1 {{ font-size: 1.3rem !important; }}
+            h2 {{ font-size: 1.1rem !important; }}
+            h3 {{ font-size: 0.95rem !important; }}
+
+            /* -- Plotly charts responsive height -- */
+            .js-plotly-plot {{
+                min-height: 280px;
+            }}
+
+            /* -- Columns: let Streamlit stack but ensure spacing -- */
+            [data-testid="stHorizontalBlock"] {{
+                gap: 0.5rem !important;
+            }}
+
+            /* -- Expander cards compact -- */
+            [data-testid="stExpander"] {{
+                border-radius: 8px;
+            }}
+        }}
+
+        /* ============================================================
+           MOBILE BREAKPOINT (max-width: 480px)
+           ============================================================ */
+        @media (max-width: 480px) {{
+            /* -- Even tighter padding -- */
+            .block-container {{
+                padding-left: 0.5rem !important;
+                padding-right: 0.5rem !important;
+                padding-top: 0.25rem !important;
+            }}
+
+            /* -- Header: minimal on phone -- */
+            .flying-roos-header {{
+                padding: 10px 12px;
+                border-radius: 8px;
+                margin-bottom: 8px;
+                gap: 10px;
+                flex-wrap: wrap;
+            }}
+            .flying-roos-header img {{
+                height: 32px;
+            }}
+            .flying-roos-header h1 {{
+                font-size: 1rem !important;
+                letter-spacing: 0px;
+            }}
+            .flying-roos-header .subtitle {{
+                font-size: 0.65rem;
+            }}
+            .flying-roos-header a {{
+                font-size: 0.65rem;
+            }}
+
+            /* -- Tabs: even more compact -- */
+            .stTabs [data-baseweb="tab-list"] {{
+                padding: 3px;
+                gap: 2px;
+                border-radius: 8px;
+            }}
+            .stTabs [data-baseweb="tab"] {{
+                padding: 6px 10px;
+                font-size: 0.7rem;
+                border-radius: 6px;
+                min-height: 44px;
+            }}
+
+            /* -- Headings: phone-sized -- */
+            h1 {{ font-size: 1.1rem !important; }}
+            h2 {{ font-size: 1rem !important; }}
+            h3 {{ font-size: 0.85rem !important; }}
+
+            /* -- Metrics: 2-column feel on phone -- */
+            [data-testid="stMetricValue"] {{
+                font-size: 1rem !important;
+            }}
+            [data-testid="stMetricLabel"] {{
+                font-size: 0.6rem !important;
+            }}
+            [data-testid="stMetric"] {{
+                padding: 6px 8px !important;
+            }}
+
+            /* -- Sidebar: full screen on phone -- */
+            [data-testid="stSidebar"] {{
+                min-width: 100vw !important;
+                max-width: 100vw !important;
+            }}
+
+            /* -- Buttons: full width on phone -- */
+            .stButton button,
+            .stDownloadButton button {{
+                width: 100% !important;
+                min-height: 48px;
+                font-size: 0.8rem;
+            }}
+
+            /* -- Force columns to stack vertically on phone -- */
+            [data-testid="stHorizontalBlock"] {{
+                flex-direction: column !important;
+                gap: 0.5rem !important;
+            }}
+            [data-testid="stHorizontalBlock"] > [data-testid="stVerticalBlockBorderWrapper"] {{
+                width: 100% !important;
+                flex: none !important;
+            }}
+
+            /* -- DataFrames: constrain and scroll -- */
+            [data-testid="stDataFrame"] {{
+                max-width: 100vw !important;
+                overflow-x: auto !important;
+            }}
+
+            /* -- Dividers tighter -- */
+            hr {{
+                margin: 0.5rem 0;
+            }}
+
+            /* -- Charts: minimum usable height on phone -- */
+            .js-plotly-plot {{
+                min-height: 250px;
+            }}
+
+            /* -- Reduce box shadows on mobile (performance) -- */
+            .stTabs [data-baseweb="tab-list"],
+            .stButton button,
+            [data-testid="stExpander"] {{
+                box-shadow: 0 1px 4px rgba(0,0,0,0.08) !important;
+            }}
+
+            /* -- Caption text smaller -- */
+            .stCaption, [data-testid="stCaptionContainer"] {{
+                font-size: 0.65rem !important;
+            }}
+        }}
         </style>
     """, unsafe_allow_html=True)
 
 
 def render_header():
-    """Render the branded header bar."""
-    st.markdown("""
+    """Render the branded header bar with inline logo."""
+    import base64
+    from pathlib import Path
+    logo_path = Path(__file__).parent / "FLYING ROOS.png"
+    logo_b64 = ""
+    if logo_path.exists():
+        logo_b64 = base64.b64encode(logo_path.read_bytes()).decode()
+    logo_html = f'<img src="data:image/png;base64,{logo_b64}" alt="Flying Roos">' if logo_b64 else ""
+    st.markdown(f"""
         <div class="flying-roos-header">
+            {logo_html}
             <div>
                 <h1>Race Analyser</h1>
                 <div class="subtitle">BONDS Flying Roos | SailGP Performance Analytics</div>
@@ -1221,15 +1473,17 @@ def render_start_tab(race_data, selected_boats, selected_race_id):
     """Start analysis tab — runs independently as a fragment."""
     st.markdown("## Start Analysis")
 
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
+    # 2x2 grid works on both desktop and mobile
+    row1_c1, row1_c2 = st.columns(2)
+    with row1_c1:
         st.metric("Race ID", f"{int(selected_race_id)}")
-    with col2:
+    with row1_c2:
         legs_in_race = race_data['TRK_LEG_NUM_unk'].dropna().unique()
         st.metric("Total Legs", len([l for l in legs_in_race if l > 0]))
-    with col3:
+    row2_c1, row2_c2 = st.columns(2)
+    with row2_c1:
         st.metric("Boats Racing", len(selected_boats))
-    with col4:
+    with row2_c2:
         avg_tws = race_data['TWS_MHU_SGP_km_h_1'].mean()
         st.metric("Avg TWS", f"{avg_tws:.1f} km/h")
 
@@ -1307,7 +1561,8 @@ def render_legs_tab(race_data, selected_boats, selected_legs, show_stability):
             with col1:
                 fig = plot_leg_tracks(leg_data, selected_boats, int(leg_num))
                 if fig:
-                    st.plotly_chart(fig, use_container_width=True, key=f"leg_track_{leg_num}")
+                    st.plotly_chart(fig, use_container_width=True, key=f"leg_track_{leg_num}",
+                                   config={'scrollZoom': True, 'displayModeBar': False, 'displaylogo': False})
             with col2:
                 summary_styled = create_summary_table_styled(leg_data, selected_boats, int(leg_num))
                 if summary_styled is not None:
@@ -1336,7 +1591,8 @@ def render_wind_tab(race_data, race_data_full, selected_boats):
 
         fig = plot_wind_analysis(race_data, wind_boat)
         if fig:
-            st.plotly_chart(fig, use_container_width=True, key="wind_analysis_chart")
+            st.plotly_chart(fig, use_container_width=True, key="wind_analysis_chart",
+                               config={'displayModeBar': False, 'displaylogo': False})
         else:
             st.warning("No wind data available for selected boat")
 
@@ -1367,14 +1623,16 @@ def render_wind_tab(race_data, race_data_full, selected_boats):
             st.markdown("**True Wind Speed (TWS)**")
             try:
                 tws_fig = create_wind_map(race_data_full, 'TWS_MHU_SGP_km_h_1', 'TWS Distribution', colorscale='Viridis')
-                st.plotly_chart(tws_fig, use_container_width=True, key="tws_map")
+                st.plotly_chart(tws_fig, use_container_width=True, key="tws_map",
+                                   config={'displayModeBar': False, 'displaylogo': False})
             except Exception as e:
                 st.error(f"Error creating TWS map: {str(e)}")
         with col2:
             st.markdown("**True Wind Direction (TWD)**")
             try:
                 twd_fig = create_wind_map(race_data_full, 'TWD_MHU_SGP_deg', 'TWD Distribution', colorscale='RdYlGn')
-                st.plotly_chart(twd_fig, use_container_width=True, key="twd_map")
+                st.plotly_chart(twd_fig, use_container_width=True, key="twd_map",
+                                   config={'displayModeBar': False, 'displaylogo': False})
             except Exception as e:
                 st.error(f"Error creating TWD map: {str(e)}")
     except Exception as e:
@@ -1397,7 +1655,7 @@ def render_tactical_tab(race_data_full, selected_race_id, race_date):
 
             if not legs_df.empty:
                 # --- Filter controls ---
-                fc1, fc2, fc3 = st.columns([1, 1, 2])
+                fc1, fc2 = st.columns(2)
                 total_legs = len(leg_summary_df)
                 with fc1:
                     options = sorted(
@@ -1431,7 +1689,7 @@ def render_tactical_tab(race_data_full, selected_race_id, race_date):
                     kept_ids = kept["leg_id"].unique()
                     return kept, legs_data[legs_data["leg_id"].isin(kept_ids)]
 
-                uw_tab, dw_tab = st.tabs(["Upwind (ALL BOATS)", "Downwind (ALL BOATS)"])
+                uw_tab, dw_tab = st.tabs(["Upwind", "Downwind"])
 
                 with uw_tab:
                     st.markdown("### All Boats - Upwind Legs")
@@ -1491,27 +1749,25 @@ def render_pdf_tab(df_full, selected_race_id, selected_boats, selected_legs):
     st.markdown("## Download Race Report")
     st.markdown("Generate a professional PDF report with all race analysis. Uses matplotlib rendering (no Chrome required).")
 
-    col1, col2, col3 = st.columns([1, 1, 1])
-    with col2:
-        if st.button("Generate PDF Report", use_container_width=True, key="gen_pdf_v4"):
-            with st.spinner("Generating PDF report..."):
-                try:
-                    pdf_buffer = generate_race_report_pdf(
-                        df_full, selected_race_id, selected_boats, selected_legs
-                    )
-                    st.success("PDF generated successfully!")
-                    st.download_button(
-                        label="Download PDF Report",
-                        data=pdf_buffer,
-                        file_name=f"race_report_{int(selected_race_id)}.pdf",
-                        mime="application/pdf",
-                        use_container_width=True
-                    )
-                except Exception as e:
-                    st.error(f"Error generating PDF: {str(e)}")
-                finally:
-                    plt.close('all')
-                    gc.collect()
+    if st.button("Generate PDF Report", use_container_width=True, key="gen_pdf_v4"):
+        with st.spinner("Generating PDF report..."):
+            try:
+                pdf_buffer = generate_race_report_pdf(
+                    df_full, selected_race_id, selected_boats, selected_legs
+                )
+                st.success("PDF generated successfully!")
+                st.download_button(
+                    label="Download PDF Report",
+                    data=pdf_buffer,
+                    file_name=f"race_report_{int(selected_race_id)}.pdf",
+                    mime="application/pdf",
+                    use_container_width=True
+                )
+            except Exception as e:
+                st.error(f"Error generating PDF: {str(e)}")
+            finally:
+                plt.close('all')
+                gc.collect()
 
 
 # ============================================================================
@@ -1528,10 +1784,7 @@ def main():
 
     apply_flying_roos_css()
 
-    # Logo + header
-    col_logo, col_spacer = st.columns([1, 3])
-    with col_logo:
-        st.image("FLYING ROOS.png", width=220)
+    # Logo integrated into header bar
     render_header()
 
     # Initialize session state
@@ -1649,7 +1902,7 @@ def main():
         df_full = st.session_state.df_full
 
         tab1, tab2, tab3, tab4, tab5 = st.tabs([
-            "Start", "Legs", "Wind", "Tactical", "PDF Export"
+            "Start", "Legs", "Wind", "Tactical", "PDF"
         ])
 
         with tab1:
