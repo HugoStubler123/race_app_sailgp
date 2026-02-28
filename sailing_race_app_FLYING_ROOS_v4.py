@@ -196,7 +196,8 @@ def compute_leg_summary(leg_data, boat):
     if len(boat_data) == 0:
         return None
     time_seconds = len(boat_data)
-    coords = boat_data[['LATITUDE_GPS_unk', 'LONGITUDE_GPS_unk']].values
+    coords = boat_data[['LATITUDE_GPS_unk', 'LONGITUDE_GPS_unk']].dropna().values
+    coords = coords[np.isfinite(coords).all(axis=1)]
     total_distance = 0
     for i in range(1, len(coords)):
         total_distance += geodesic(coords[i-1], coords[i]).meters
