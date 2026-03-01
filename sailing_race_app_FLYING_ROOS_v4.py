@@ -1194,14 +1194,6 @@ def apply_flying_roos_css():
             border-radius: 8px;
         }}
 
-        /* ---- Global touch optimization ---- */
-        * {{
-            -webkit-tap-highlight-color: transparent;
-        }}
-        html {{
-            touch-action: manipulation;
-        }}
-
         /* ============================================================
            TABLET BREAKPOINT (max-width: 768px)
            ============================================================ */
@@ -1281,10 +1273,9 @@ def apply_flying_roos_css():
                 min-width: 100% !important;
             }}
 
-            /* -- Sidebar: full width overlay -- */
+            /* -- Sidebar: proper overlay, not pushing content -- */
             [data-testid="stSidebar"] {{
-                min-width: 85vw !important;
-                max-width: 85vw !important;
+                z-index: 999;
             }}
             [data-testid="stSidebar"] .stSelectbox label,
             [data-testid="stSidebar"] .stMultiSelect label {{
@@ -1385,10 +1376,9 @@ def apply_flying_roos_css():
                 padding: 6px 8px !important;
             }}
 
-            /* -- Sidebar: full screen on phone -- */
+            /* -- Sidebar: overlay, high z-index on phone -- */
             [data-testid="stSidebar"] {{
-                min-width: 100vw !important;
-                max-width: 100vw !important;
+                z-index: 999;
             }}
 
             /* -- Buttons: full width on phone -- */
@@ -1399,15 +1389,8 @@ def apply_flying_roos_css():
                 font-size: 0.8rem;
             }}
 
-            /* -- Force columns to stack vertically on phone -- */
-            [data-testid="stHorizontalBlock"] {{
-                flex-direction: column !important;
-                gap: 0.5rem !important;
-            }}
-            [data-testid="stHorizontalBlock"] > [data-testid="stVerticalBlockBorderWrapper"] {{
-                width: 100% !important;
-                flex: none !important;
-            }}
+            /* -- Let Streamlit handle column stacking natively -- */
+            /* Streamlit auto-stacks columns on narrow viewports */
 
             /* -- DataFrames: constrain and scroll -- */
             [data-testid="stDataFrame"] {{
@@ -1779,7 +1762,7 @@ def main():
         page_title="Flying Roos - Race Analysis",
         page_icon="🦘",
         layout="wide",
-        initial_sidebar_state="expanded"
+        initial_sidebar_state="collapsed"
     )
 
     apply_flying_roos_css()
